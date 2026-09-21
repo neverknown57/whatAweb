@@ -1,0 +1,24 @@
+{
+  "name": "whatsapp-tagging-backend",
+  "version": "1.0.0",
+  "description": "Backend for WhatsApp Cloud API messaging + contact tagging app",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "db:init": "node scripts/initDb.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.4",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "csv-parser": "^3.2.1",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.3",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.4.0",
+    "pg": "^8.12.0",
+    "xlsx": "^0.18.5"
+  }
+}
