@@ -12,6 +12,8 @@ import { SettingsPage } from './pages/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import api from './api';
 import { User } from './types';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -49,30 +51,36 @@ export function App() {
 
   if (!user) {
     return (
-      <LoginPage
-        onLoginSuccess={(userData) => {
-          setUser(userData);
-        }}
-      />
+      <ThemeProvider>
+        <LoginPage
+          onLoginSuccess={(userData) => {
+            setUser(userData);
+          }}
+        />
+      </ThemeProvider>
     );
   }
 
   return (
-    <BrowserRouter>
-      <AppLayout user={user} onLogout={handleLogout}>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/contacts" element={<ContactsPage />} />
-          <Route path="/import" element={<ImportPage />} />
-          <Route path="/tags" element={<TagsPage />} />
-          <Route path="/inbox" element={<InboxPage />} />
-          <Route path="/templates" element={<TemplatesPage />} />
-          <Route path="/campaigns" element={<CampaignsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AppLayout>
-    </BrowserRouter>
+    <ThemeProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppLayout user={user} onLogout={handleLogout}>
+            <Routes>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/import" element={<ImportPage />} />
+              <Route path="/tags" element={<TagsPage />} />
+              <Route path="/inbox" element={<InboxPage />} />
+              <Route path="/templates" element={<TemplatesPage />} />
+              <Route path="/campaigns" element={<CampaignsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AppLayout>
+        </BrowserRouter>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

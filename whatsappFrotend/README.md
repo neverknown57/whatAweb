@@ -1,30 +1,34 @@
-# React + TypeScript + Vite
+# WhatsApp CRM React Dashboard Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern React 18 + TypeScript + Vite Single Page Application for the WhatsApp Cloud API CRM Platform.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Key Features
 
-## Expanding the ESLint configuration
+- **Dashboard**: KPI analytics cards, message status breakdown, tag distribution, recent campaign feed.
+- **CRM Contacts**: Search, filter, opt-in toggle, tabular desktop view & mobile contact cards, inline tag assignment, CSV export.
+- **CSV/XLSX Contact Importer**: Multi-step wizard with header auto-detection, interactive column mapping, duplicate handling, and error CSV log downloader.
+- **WhatsApp Inbox**: Live chat thread interface with 24h Customer Service Window indicator, text/media composer, template quick send, and single-pane mobile chat view.
+- **WhatsApp Templates**: Meta template catalog, sync from Meta API button, dynamic component variable placeholder inspector (`{{1}}`), parameter binding, and live mobile phone preview.
+- **Broadcast Campaigns**: Wizard, audience selector, rate-limited queue execution worker, pause/resume/cancel controls.
+- **Settings**: WABA credentials config, access token reveal, Theme Switcher, and Telegram support link.
+- **Theme Engine**: Centralized CSS design tokens in `index.css` supporting **System** (OS `prefers-color-scheme`), **Light**, and **Dark** modes with zero theme flash.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+---
 
-- Configure the top-level `parserOptions` property like this:
+## 🛠️ Quick Commands
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json', './tsconfig.app.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```bash
+# Install dependencies
+npm install
+
+# Start Vite Development Server
+npm run dev
+
+# Build Production Bundle
+npm run build
+
+# Preview Production Build
+npm run preview
 ```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list

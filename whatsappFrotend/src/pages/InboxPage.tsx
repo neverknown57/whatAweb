@@ -5,15 +5,23 @@ import {
   Check,
   CheckCheck,
   RefreshCw,
+  ArrowLeft,
+  MessageSquare,
 } from 'lucide-react';
 import api from '../api';
 import { Conversation, Message, Template } from '../types';
+import { useToast } from '../context/ToastContext';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export const InboxPage: React.FC = () => {
+  const { showToast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
+
+  // Mobile View Toggle State: 'list' or 'chat'
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
   // Message inputs
   const [textBody, setTextBody] = useState('');
@@ -33,7 +41,7 @@ export const InboxPage: React.FC = () => {
         }
       }
     } catch (err) {
-      console.error('Error fetching conversations:', err);
+      showToast('Failed to load conversations', 'error');
     }
   };
 
@@ -44,7 +52,7 @@ export const InboxPage: React.FC = () => {
         setMessages(res.data.messages);
       }
     } catch (err) {
-      console.error('Error fetching messages:', err);
+      showToast('Failed to load chat thread', 'error');
     }
   };
 
@@ -72,6 +80,11 @@ export const InboxPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const selectThread = (c: Conversation) => {
+    setSelectedConv(c);
+    setMobileView('chat');
+  };
+
   // Calculate 24h Customer Service Window state
   const isWithin24hWindow = (lastMessageAt: string | null) => {
     if (!lastMessageAt) return false;
@@ -92,22 +105,24 @@ export const InboxPage: React.FC = () => {
         });
         if (res.data.success) {
           setTextBody('');
+          showToast('Message sent', 'success');
           fetchMessages(selectedConv.contact_id);
           fetchConversations();
         }
       } else if (activeTab === 'template') {
-        if (!selectedTemplateName) return alert('Select a template');
+        if (!selectedTemplateName) return showToast('Select a template first', 'error');
         const res = await api.post('/messages/send-template', {
           contact_id: selectedConv.contact_id,
           template_name: selectedTemplateName,
         });
         if (res.data.success) {
           setSelectedTemplateName('');
+          showToast('Template message sent', 'success');
           fetchMessages(selectedConv.contact_id);
           fetchConversations();
         }
       } else if (activeTab === 'media') {
-        if (!mediaUrl.trim()) return alert('Media URL required');
+        if (!mediaUrl.trim()) return showToast('Media URL required', 'error');
         const res = await api.post('/messages/send-media', {
           contact_id: selectedConv.contact_id,
           type: 'image',
@@ -115,21 +130,26 @@ export const InboxPage: React.FC = () => {
         });
         if (res.data.success) {
           setMediaUrl('');
+          showToast('Media sent', 'success');
           fetchMessages(selectedConv.contact_id);
           fetchConversations();
         }
       }
     } catch (err: any) {
-      alert(err.response?.data?.error?.message || 'Failed to send message');
+      showToast(err.response?.data?.error?.message || 'Failed to send message', 'error');
     }
   };
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex rounded-xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl">
-      {/* Left Conversations Sidebar */}
-      <div className="w-80 border-r border-slate-800 flex flex-col bg-slate-950/60 shrink-0">
-        <div className="p-3 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-xs text-slate-200">Conversations</h3>
+    <div className="h-[calc(100vh-8.5rem)] md:h-[calc(100vh-6.5rem)] flex rounded-xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl relative">
+      {/* Conversation Thread List (Desktop: Left panel | Mobile: Full screen when mobileView === 'list') */}
+      <div
+        className={`${
+          mobileView === 'chat' ? 'hidden md:flex' : 'flex'
+        } w-full md:w-80 border-r border-slate-800 flex-col bg-slate-900/60 shrink-0`}
+      >
+        <div className="p-3.5 border-b border-slate-800 flex items-center justify-between">
+          <h3 className="font-bold text-xs text-slate-200">Active Conversations</h3>
           <button onClick={fetchConversations} className="p-1 text-slate-400 hover:text-slate-200">
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
@@ -144,15 +164,17 @@ export const InboxPage: React.FC = () => {
               return (
                 <button
                   key={c.id}
-                  onClick={() => setSelectedConv(c)}
+                  onClick={() => selectThread(c)}
                   className={`w-full p-3.5 text-left flex items-start justify-between gap-2 transition-colors ${
-                    isSelected ? 'bg-blue-600/10 border-l-4 border-blue-500' : 'hover:bg-slate-900/40'
+                    isSelected ? 'bg-blue-600/10 border-l-4 border-blue-500' : 'hover:bg-slate-800/40'
                   }`}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-xs text-slate-100 truncate">{c.contact_name || `+${c.wa_number}`}</span>
-                      <span className="text-[10px] text-slate-500">{new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-[10px] text-slate-500">
+                        {new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
                     <p className="text-[11px] text-slate-400 truncate mt-0.5">{c.last_message_preview || 'No messages yet'}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
@@ -169,52 +191,67 @@ export const InboxPage: React.FC = () => {
               );
             })
           ) : (
-            <div className="p-6 text-center text-xs text-slate-500">No active conversations found.</div>
+            <div className="p-6 text-center text-xs text-slate-500">No active conversations.</div>
           )}
         </div>
       </div>
 
-      {/* Right Chat Thread Area */}
+      {/* Chat Thread Area (Desktop: Right panel | Mobile: Full screen when mobileView === 'chat') */}
       {selectedConv ? (
-        <div className="flex-1 flex flex-col min-w-0 bg-slate-900">
-          {/* Chat Header */}
-          <div className="h-14 px-5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between shrink-0">
-            <div>
-              <h3 className="font-bold text-sm text-slate-100">{selectedConv.contact_name || 'Customer'}</h3>
-              <p className="text-[11px] font-mono text-slate-400">+{selectedConv.wa_number}</p>
+        <div
+          className={`${
+            mobileView === 'list' ? 'hidden md:flex' : 'flex'
+          } flex-1 flex-col min-w-0 bg-slate-950 w-full h-full`}
+        >
+          {/* Chat Header with Mobile Back Button */}
+          <div className="h-14 px-4 sm:px-5 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5">
+              {/* Back to thread list button for mobile */}
+              <button
+                onClick={() => setMobileView('list')}
+                className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                aria-label="Back to conversations"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h3 className="font-bold text-xs sm:text-sm text-slate-100">{selectedConv.contact_name || 'Customer'}</h3>
+                <p className="text-[10px] sm:text-[11px] font-mono text-slate-400">+{selectedConv.wa_number}</p>
+              </div>
             </div>
+
             <div className="flex items-center gap-2">
               <span
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${
+                className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold flex items-center gap-1 ${
                   isWithin24hWindow(selectedConv.customer_last_message_at)
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                     : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                 }`}
               >
-                <Clock className="w-3.5 h-3.5" />
-                {isWithin24hWindow(selectedConv.customer_last_message_at) ? '24h Window Open' : 'Use Template (24h Expired)'}
+                <Clock className="w-3 h-3" />
+                <span>{isWithin24hWindow(selectedConv.customer_last_message_at) ? '24h Open' : 'Template Required'}</span>
               </span>
             </div>
           </div>
 
-          {/* Messages Thread */}
-          <div className="flex-1 p-5 overflow-y-auto space-y-3.5 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
+          {/* Messages Thread Window */}
+          <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
             {messages.map((m) => {
               const isInbound = m.direction === 'inbound';
               return (
                 <div key={m.id} className={`flex ${isInbound ? 'justify-start' : 'justify-end'}`}>
                   <div
-                    className={`max-w-md p-3 rounded-xl text-xs space-y-1 shadow-md ${
+                    className={`max-w-[85%] sm:max-w-md p-3 rounded-xl text-xs space-y-1 shadow-md ${
                       isInbound ? 'bg-slate-800 text-slate-100 border border-slate-700' : 'bg-emerald-950 text-emerald-100 border border-emerald-800'
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{m.body}</p>
                     {m.media_url && (
                       <div className="pt-1">
-                        <img src={m.media_url} alt="Media Attachment" className="max-w-xs rounded-lg border border-slate-700" />
+                        <img src={m.media_url} alt="Media Attachment" className="max-w-full rounded-lg border border-slate-700" />
                       </div>
                     )}
-                    <div className="flex items-center justify-end gap-1.5 pt-1 text-[10px] text-slate-400">
+                    <div className="flex items-center justify-end gap-1.5 pt-1 text-[9px] text-slate-400">
                       <span>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       {!isInbound && (
                         <span>
@@ -236,12 +273,12 @@ export const InboxPage: React.FC = () => {
           </div>
 
           {/* Message Composer Footer */}
-          <div className="p-4 border-t border-slate-800 bg-slate-950/80 space-y-3">
+          <div className="p-3 sm:p-4 border-t border-slate-800 bg-slate-900/90 space-y-2.5">
             {/* Tabs */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 text-xs">
               <button
                 onClick={() => setActiveTab('text')}
-                className={`px-3 py-1 rounded text-xs font-semibold ${
+                className={`px-2.5 py-1 rounded text-[11px] font-semibold ${
                   activeTab === 'text' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'
                 }`}
               >
@@ -249,7 +286,7 @@ export const InboxPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('template')}
-                className={`px-3 py-1 rounded text-xs font-semibold ${
+                className={`px-2.5 py-1 rounded text-[11px] font-semibold ${
                   activeTab === 'template' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'
                 }`}
               >
@@ -257,7 +294,7 @@ export const InboxPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('media')}
-                className={`px-3 py-1 rounded text-xs font-semibold ${
+                className={`px-2.5 py-1 rounded text-[11px] font-semibold ${
                   activeTab === 'media' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'
                 }`}
               >
@@ -277,7 +314,7 @@ export const InboxPage: React.FC = () => {
                   value={textBody}
                   onChange={(e) => setTextBody(e.target.value)}
                   disabled={!isWithin24hWindow(selectedConv.customer_last_message_at)}
-                  className="flex-1 px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 placeholder-slate-500 disabled:opacity-50"
+                  className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 placeholder-slate-500 disabled:opacity-50"
                 />
               )}
 
@@ -285,9 +322,9 @@ export const InboxPage: React.FC = () => {
                 <select
                   value={selectedTemplateName}
                   onChange={(e) => setSelectedTemplateName(e.target.value)}
-                  className="flex-1 px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100"
+                  className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100"
                 >
-                  <option value="">Select an approved WhatsApp template...</option>
+                  <option value="">Select an approved Meta template...</option>
                   {templates.map((t) => (
                     <option key={t.id} value={t.name}>
                       {t.name} ({t.language})
@@ -299,26 +336,30 @@ export const InboxPage: React.FC = () => {
               {activeTab === 'media' && (
                 <input
                   type="text"
-                  placeholder="Paste image / media URL (e.g. https://example.com/image.png)..."
+                  placeholder="Paste image / media URL..."
                   value={mediaUrl}
                   onChange={(e) => setMediaUrl(e.target.value)}
-                  className="flex-1 px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100"
+                  className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100"
                 />
               )}
 
               <button
                 type="submit"
-                className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-lg shadow-emerald-600/20 flex items-center gap-1.5"
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-lg shadow-emerald-600/20 flex items-center gap-1.5 shrink-0"
               >
                 <Send className="w-3.5 h-3.5" />
-                Send
+                <span>Send</span>
               </button>
             </form>
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-xs text-slate-500">
-          Select a conversation thread to start chatting.
+        <div className="hidden md:flex flex-1 items-center justify-center">
+          <EmptyState
+            icon={MessageSquare}
+            title="No conversation selected"
+            description="Select a chat thread from the left menu to view messages."
+          />
         </div>
       )}
     </div>

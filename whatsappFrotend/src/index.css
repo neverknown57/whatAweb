@@ -1,21 +1,53 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --bg-primary: #0f172a;
-    --bg-card: #1e293b;
-    --accent: #2563eb;
-    --accent-wa: #25d366;
-  }
+:root {
+  /* Default Light Theme Design Tokens */
+  --bg-body: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-header: rgba(255, 255, 255, 0.8);
+  --bg-sidebar: #ffffff;
+  --border-color: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --input-bg: #f8fafc;
+  --input-border: #cbd5e1;
+  --chat-bg: #f1f5f9;
+  --chat-bubble-inbound: #ffffff;
+  --chat-bubble-outbound: #dcf8c6;
+  --chat-text-outbound: #111b21;
+}
 
-  body {
-    background-color: #0f172a;
-    color: #f8fafc;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-  }
+[data-theme='dark'] {
+  /* Dark Theme Design Tokens */
+  --bg-body: #090d16;
+  --bg-card: #111827;
+  --bg-card-hover: #1f2937;
+  --bg-header: rgba(17, 24, 39, 0.85);
+  --bg-sidebar: #0b101d;
+  --border-color: #1f2937;
+  --border-subtle: #111827;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --input-bg: #111827;
+  --input-border: #374151;
+  --chat-bg: #0b101d;
+  --chat-bubble-inbound: #1f2937;
+  --chat-bubble-outbound: #064e3b;
+  --chat-text-outbound: #ecfdf5;
+}
+
+body {
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom Scrollbars */
@@ -25,35 +57,18 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  background: var(--text-muted);
+  opacity: 0.3;
+  border-radius: 9999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
-
-/* Glassmorphism utility */
+/* Glassmorphism panel utility */
 .glass-panel {
-  background: rgba(30, 41, 59, 0.7);
+  background: var(--bg-header);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.chat-bubble-inbound {
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #f1f5f9;
-  border-top-left-radius: 4px;
-}
-
-.chat-bubble-outbound {
-  background: #064e3b;
-  border: 1px solid #047857;
-  color: #ecfdf5;
-  border-top-right-radius: 4px;
+  border: 1px solid var(--border-color);
 }
