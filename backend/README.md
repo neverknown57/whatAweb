@@ -8,8 +8,8 @@ Node.js & Express REST API server providing Meta WhatsApp Cloud API communicatio
 
 ```env
 # Meta WhatsApp Cloud API Credentials
-WHATSAPP_PHONE_NUMBER_ID=1360945377093153
-WHATSAPP_BUSINESS_ACCOUNT_ID=1800524357778820
+WHATSAPP_PHONE_NUMBER_ID=123456785890
+WHATSAPP_BUSINESS_ACCOUNT_ID=18008888888
 WHATSAPP_ACCESS_TOKEN=your_permanent_meta_access_token
 WHATSAPP_API_VERSION=v26.0
 
@@ -17,7 +17,7 @@ WHATSAPP_API_VERSION=v26.0
 WHATSAPP_WEBHOOK_VERIFY_TOKEN=choose_a_random_secret_string
 
 # PostgreSQL Database Connection
-DATABASE_URL=postgres://postgres:12345@localhost:5433/whatsapp_tagging
+DATABASE_URL=postgres://postgres:password@localhost:5433/db_name
 
 # Server Port & Auth
 PORT=3000

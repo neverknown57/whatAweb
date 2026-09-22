@@ -96,8 +96,8 @@ Create a `.env` file inside the `backend/` directory:
 
 ```env
 # --- WhatsApp Cloud API Credentials (Meta Developer Dashboard) ---
-WHATSAPP_PHONE_NUMBER_ID=1360945377093153
-WHATSAPP_BUSINESS_ACCOUNT_ID=1800524357778820
+WHATSAPP_PHONE_NUMBER_ID=13123456789
+WHATSAPP_BUSINESS_ACCOUNT_ID=1800123456789
 WHATSAPP_ACCESS_TOKEN=your_permanent_meta_access_token
 WHATSAPP_API_VERSION=v26.0
 
@@ -106,7 +106,7 @@ WHATSAPP_API_VERSION=v26.0
 WHATSAPP_WEBHOOK_VERIFY_TOKEN=choose_a_random_secret_string
 
 # --- Database (PostgreSQL Connection String) ---
-DATABASE_URL=postgres://postgres:12345@localhost:5433/whatsapp_tagging
+DATABASE_URL=postgres://postgres:password@localhost:5433/db_name
 
 # --- Application Server Port ---
 PORT=3000
@@ -124,7 +124,8 @@ JWT_SECRET=super_secret_jwt_key_whatsapp_crm
 - **PostgreSQL**: v13 or higher
 
 ### 1. Database Setup & Initialization
-Create a PostgreSQL database named `whatsapp_tagging`, then run the initializer script:
+Create a PostgreSQL database named 
+`db_name`, then run the initializer script:
 
 ```bash
 cd backend
