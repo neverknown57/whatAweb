@@ -31,11 +31,13 @@ A full-stack, production-grade WhatsApp Customer Relationship Management (CRM), 
   - Dynamic contact field binding (`{{contact.name}}`, `{{contact.email}}`, `{{contact.phone}}`, `{{current_date}}`).
   - Live interactive mobile phone device preview.
 
-- **📢 Broadcast Campaigns & Queue Execution**:
-  - Audience targeting (All opted-in contacts or filtered by Tag).
-  - Pre-flight recipient estimator excluding opted-out contacts.
+- **📢 Broadcast Campaigns & Cost-Effective Session Messaging**:
+  - **Meta Approved Templates**: Send rich template broadcasts with dynamic parameter binding (`{{contact.name}}`, media headers, CTA buttons).
+  - **100% Free Session Broadcasts ($0 Meta Fee)**: Send free-form text and media messages (photos, videos, documents, audio with captions) to contacts inside their active 24h window with $0 Meta template fee.
+  - **24h Active Customer Auto-Tagging**: Inbound customer messages automatically assign the `"24h Active"` tag and timestamp.
+  - **24h Tag Cleanup Refresh**: Built-in 1-click **Refresh 24h Tags** button and API (`POST /api/contacts/refresh-24h`) automatically removes expired tags from contacts whose 24h window has passed (> 24 hours).
   - Rate-limited background queue execution worker (~20 messages/sec rate limit to respect Meta thresholds).
-  - Real-time campaign controls: **Launch**, **Pause**, **Resume**, and **Cancel**.
+  - Real-time campaign controls: **Launch**, **Pause**, **Resume**, **Relaunch**, and **Cancel**.
 
 - **⚡ Robust Webhook Engine**:
   - Instant `200 OK` ACK response to prevent Meta webhook retries/timeouts.

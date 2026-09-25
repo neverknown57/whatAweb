@@ -105,4 +105,16 @@ router.post('/:id/cancel', async (req, res) => {
   }
 });
 
+// POST /api/campaigns/:id/relaunch - Relaunch existing campaign
+router.post('/:id/relaunch', async (req, res) => {
+  try {
+    const orgId = req.user.organizationId;
+    const userId = req.user.userId;
+    const newCampaign = await CampaignService.relaunchCampaign(orgId, userId, req.params.id, req.body || {});
+    res.status(201).json({ success: true, campaign: newCampaign, message: 'Campaign relaunched successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
 module.exports = router;

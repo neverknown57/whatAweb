@@ -297,6 +297,63 @@ class ContactService {
       [contactId, organizationId]
     );
   }
+
+  /**
+   * Get or create the "24h Active" system tag for an organization
+   */
+  static async getOrCreate24hTag(organizationId = 1) {
+    const res = await pool.query(
+      `INSERT INTO tags (organization_id, name, color)
+       VALUES ($1, '24h Active', '#10b981')
+       ON CONFLICT (organization_id, name) DO UPDATE SET name = EXCLUDED.name
+       RETURNING id, name, color`,
+      [organizationId]
+    );
+    return res.rows[0];
+  }
+
+  /**
+   * Ensure active 24h contacts have the "24h Active" tag, and remove it from expired contacts (> 24h)
+   */
+  static async refresh24hTags(organizationId = 1) {
+    const tag = await this.getOrCreate24hTag(organizationId);
+
+    // 1. Add "24h Active" tag to all opted_in contacts with last_message_at within the last 24 hours
+    await pool.query(
+      `INSERT INTO contact_tags (contact_id, tag_id)
+       SELECT id, $1 FROM contacts
+       WHERE organization_id = $2
+         AND opt_in_status = 'opted_in'
+         AND last_message_at >= NOW() - INTERVAL '24 hours'
+       ON CONFLICT DO NOTHING`,
+      [tag.id, organizationId]
+    );
+
+    // 2. Remove "24h Active" tag from contacts whose last_message_at is older than 24 hours, NULL, or opted out
+    const removeRes = await pool.query(
+      `DELETE FROM contact_tags
+       WHERE tag_id = $1
+         AND contact_id IN (
+           SELECT id FROM contacts
+           WHERE organization_id = $2
+             AND (last_message_at IS NULL OR last_message_at < NOW() - INTERVAL '24 hours' OR opt_in_status = 'opted_out')
+         )`,
+      [tag.id, organizationId]
+    );
+
+    // 3. Get total active contacts count for this tag
+    const activeRes = await pool.query(
+      `SELECT COUNT(*)::int AS count FROM contact_tags WHERE tag_id = $1`,
+      [tag.id]
+    );
+
+    return {
+      success: true,
+      tag: tag,
+      activeContactsCount: activeRes.rows[0].count,
+      removedContactsCount: removeRes.rowCount || 0,
+    };
+  }
 }
 
 module.exports = ContactService;

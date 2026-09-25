@@ -65,6 +65,19 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+// POST /api/tags/refresh-24h - Refresh 24h active tags & clean up expired tags (> 24h)
+router.post('/refresh-24h', async (req, res) => {
+  try {
+    const orgId = req.user.organizationId;
+    const ContactService = require('../services/ContactService');
+    const result = await ContactService.refresh24hTags(orgId);
+    res.json(result);
+  } catch (err) {
+    console.error('Error refreshing 24h tags:', err);
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
 // DELETE /api/tags/:id - Delete tag
 router.delete('/:id', async (req, res) => {
   const orgId = req.user.organizationId;

@@ -26,6 +26,7 @@ export interface Message {
   id: number;
   contact_id: number;
   conversation_id: number;
+  campaign_id?: number | null;
   direction: 'inbound' | 'outbound';
   type: 'text' | 'template' | 'image' | 'video' | 'audio' | 'document' | 'location';
   body: string | null;
@@ -59,6 +60,7 @@ export interface Template {
   status: string;
   category: string;
   components: any[];
+  default_parameter_mapping?: Record<string, any>;
   synced_at: string;
 }
 
@@ -68,7 +70,7 @@ export interface Campaign {
   template_name: string;
   language_code: string;
   parameter_mapping: Record<string, any>;
-  audience_type: 'all' | 'tags';
+  audience_type: 'all' | 'tags' | '24h_window';
   audience_filter: Record<string, any>;
   total_recipients: number;
   sent_count: number;

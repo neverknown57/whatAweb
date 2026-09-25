@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, Download, Trash2, Edit2, CheckCircle, XCircle, RefreshCw, X } from 'lucide-react';
+import { Search, Plus, Download, Trash2, Edit2, CheckCircle, XCircle, RefreshCw, X, Clock } from 'lucide-react';
 import api from '../api';
 import { Contact, Tag } from '../types';
 import { useToast } from '../context/ToastContext';
@@ -12,6 +12,7 @@ export const ContactsPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing24h, setRefreshing24h] = useState(false);
 
   // Pagination & Filtering
   const [search, setSearch] = useState('');
@@ -55,6 +56,25 @@ export const ContactsPage: React.FC = () => {
       if (res.data.success) setTags(res.data.tags);
     } catch (err) {
       console.error('Error fetching tags:', err);
+    }
+  };
+
+  const handleRefresh24hTags = async () => {
+    setRefreshing24h(true);
+    try {
+      const res = await api.post('/contacts/refresh-24h');
+      if (res.data.success) {
+        showToast(
+          `Refreshed 24h Tags! ${res.data.activeContactsCount} active contact(s) in window, ${res.data.removedContactsCount} expired tag(s) removed.`,
+          'success'
+        );
+        fetchContacts();
+        fetchTags();
+      }
+    } catch (err: any) {
+      showToast(err.response?.data?.error?.message || 'Failed to refresh 24h tags', 'error');
+    } finally {
+      setRefreshing24h(false);
     }
   };
 
@@ -186,19 +206,28 @@ export const ContactsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg sm:text-xl font-bold text-slate-100">Contact CRM Directory</h2>
-          <p className="text-xs text-slate-400 mt-1">Manage profiles, audience tags, opt-in consent & custom fields</p>
+          <p className="text-xs text-slate-400 mt-1">Manage profiles, 24h active window tags & bulk audience segmentation</p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={handleRefresh24hTags}
+            disabled={refreshing24h}
+            title="Clean up tags for contacts older than 24h and update active window tags"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-300 text-xs font-semibold border border-emerald-800/80 shadow-sm disabled:opacity-50 transition-colors"
+          >
+            <Clock className={`w-3.5 h-3.5 text-emerald-400 ${refreshing24h ? 'animate-spin' : ''}`} />
+            <span>{refreshing24h ? 'Cleaning...' : 'Refresh 24h Tags'}</span>
+          </button>
           <button
             onClick={handleExportCsv}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-200 border border-slate-800 transition-colors"
+            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-200 border border-slate-800 transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
           </button>
           <button
             onClick={openModalForCreate}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-lg shadow-blue-600/20 transition-all"
+            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-lg shadow-blue-600/20 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Add Contact</span>

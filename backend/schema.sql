@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS messages (
     organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE DEFAULT 1,
     contact_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
     conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
+    campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL,
     direction VARCHAR(10) NOT NULL CHECK (direction IN ('inbound', 'outbound')),
     type VARCHAR(30) DEFAULT 'text',
     body TEXT,
@@ -112,6 +113,7 @@ CREATE TABLE IF NOT EXISTS templates (
     status VARCHAR(50) DEFAULT 'APPROVED',
     category VARCHAR(50) DEFAULT 'UTILITY',
     components JSONB NOT NULL DEFAULT '[]'::jsonb,
+    default_parameter_mapping JSONB DEFAULT '{}'::jsonb,
     synced_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT templates_org_name_lang_unique UNIQUE (organization_id, name, language)
 );

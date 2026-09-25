@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, Smartphone, Sparkles, Eye, X } from 'lucide-react';
+import { RefreshCw, Smartphone, Sparkles, Eye, X, Save, Database, HardDrive } from 'lucide-react';
 import api from '../api';
 import { Template } from '../types';
 import { useToast } from '../context/ToastContext';
@@ -12,6 +12,7 @@ export const TemplatesPage: React.FC = () => {
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Mobile preview modal state
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
@@ -50,14 +51,69 @@ export const TemplatesPage: React.FC = () => {
 
   const inspectTemplate = async (template: Template) => {
     setSelectedTemplate(template);
-    setParamValues({});
+    
+    // Load local storage mapping
+    let localSaved: Record<string, string> = {};
+    try {
+      const stored = localStorage.getItem(`whatsapp_template_mapping_${template.name}`);
+      if (stored) localSaved = JSON.parse(stored);
+    } catch (e) {
+      console.error(e);
+    }
+
+    const initialValues = {
+      ...(template.default_parameter_mapping || {}),
+      ...localSaved,
+    };
+    setParamValues(initialValues);
+
     try {
       const res = await api.get(`/templates/${template.name}/analyze`);
       if (res.data.success) {
         setAnalysis(res.data.analysis);
+        const serverDefault = res.data.analysis.defaultMapping || {};
+        setParamValues((prev) => ({ ...serverDefault, ...localSaved, ...prev }));
       }
     } catch (err) {
       console.error('Error analyzing template:', err);
+    }
+  };
+
+  const handleSaveMapping = async (target: 'db' | 'browser' | 'both') => {
+    if (!selectedTemplate) return;
+    setSaving(true);
+
+    try {
+      if (target === 'browser' || target === 'both') {
+        localStorage.setItem(
+          `whatsapp_template_mapping_${selectedTemplate.name}`,
+          JSON.stringify(paramValues)
+        );
+      }
+
+      if (target === 'db' || target === 'both') {
+        await api.put(`/templates/${selectedTemplate.id}/mapping`, {
+          parameter_mapping: paramValues,
+        });
+      }
+
+      // Update local templates list state
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === selectedTemplate.id ? { ...t, default_parameter_mapping: paramValues } : t))
+      );
+
+      showToast(
+        target === 'both'
+          ? 'Dynamic components saved to Database & Browser LocalStorage!'
+          : target === 'db'
+          ? 'Dynamic components saved to Database!'
+          : 'Dynamic components saved to Browser LocalStorage!',
+        'success'
+      );
+    } catch (err: any) {
+      showToast(err.response?.data?.error?.message || 'Failed to save component mapping', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -69,8 +125,12 @@ export const TemplatesPage: React.FC = () => {
     let resolved = text;
     if (analysis?.bodyParams) {
       analysis.bodyParams.forEach((p: any) => {
-        const val = paramValues[p.key] || `{{${p.paramIndex}}}`;
-        resolved = resolved.replace(new RegExp(`\\{\\{${p.paramIndex}\\}\\}`, 'g'), val);
+        const rawVal = paramValues[p.key] || `{{${p.paramIndex}}}`;
+        const displayVal = rawVal.replace(/\{\{contact\.name\}\}/gi, 'John Doe')
+                                  .replace(/\{\{contact\.phone\}\}/gi, '+1234567890')
+                                  .replace(/\{\{contact\.email\}\}/gi, 'user@example.com')
+                                  .replace(/\{\{current_date\}\}/gi, new Date().toLocaleDateString());
+        resolved = resolved.replace(new RegExp(`\\{\\{${p.paramIndex}\\}\\}`, 'g'), displayVal);
       });
     }
     return resolved;
@@ -104,7 +164,7 @@ export const TemplatesPage: React.FC = () => {
         <div>
           <h2 className="text-lg sm:text-xl font-bold text-slate-100">WhatsApp Templates & Variable Engine</h2>
           <p className="text-xs text-slate-400 mt-1">
-            Sync Meta-approved templates, dynamically bind contact parameters & preview live device rendering
+            Sync Meta-approved templates, dynamically bind contact parameters & store reusable components in DB or Browser
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -164,10 +224,12 @@ export const TemplatesPage: React.FC = () => {
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Dynamic Inputs Form */}
           <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-4">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-blue-400" />
-              Dynamic Variable Field Generator
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                Dynamic Component Variables
+              </h3>
+            </div>
 
             {selectedTemplate && analysis ? (
               <div className="space-y-4 text-xs">
@@ -224,6 +286,40 @@ export const TemplatesPage: React.FC = () => {
                 ) : (
                   <p className="text-xs text-slate-500">This template has no dynamic body variables.</p>
                 )}
+
+                {/* Save Options Buttons */}
+                <div className="pt-3 border-t border-slate-800/80 space-y-2">
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Save Component Settings</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => handleSaveMapping('both')}
+                      className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-[11px] flex items-center gap-1.5 shadow-md shadow-blue-600/20 disabled:opacity-50"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      Save to DB & Browser
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => handleSaveMapping('db')}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-[11px] flex items-center gap-1.5 border border-slate-700 disabled:opacity-50"
+                    >
+                      <Database className="w-3.5 h-3.5 text-blue-400" />
+                      Save DB Only
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => handleSaveMapping('browser')}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-[11px] flex items-center gap-1.5 border border-slate-700 disabled:opacity-50"
+                    >
+                      <HardDrive className="w-3.5 h-3.5 text-teal-400" />
+                      Save Browser Only
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               <p className="text-xs text-slate-500 py-8 text-center">Select a template to configure parameters.</p>

@@ -18,12 +18,14 @@ pool.on('error', (err) => {
   try {
     const res = await pool.query('SELECT current_database();');
     console.log('Connected to DB:', res.rows[0].current_database);
-    console.log('Initializing database schema...');
+    console.log('Initializing database schema & auto-migrations...');
+
+    // Auto-migrate schema updates
+    await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL;`);
+    await pool.query(`ALTER TABLE templates ADD COLUMN IF NOT EXISTS default_parameter_mapping JSONB DEFAULT '{}'::jsonb;`);
+    console.log('Database schema & auto-migrations initialized successfully.');
   } catch (err) {
-    console.error('Error connecting to DB:', err);
-  } finally {
-    console.log("end");
-    // await pool.end(); // optional: close pool when done
+    console.error('Error initializing DB schema:', err);
   }
 })();
 console.log("end")

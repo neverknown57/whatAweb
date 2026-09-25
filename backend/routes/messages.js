@@ -64,7 +64,7 @@ router.post('/send', async (req, res) => {
 
 // POST /api/messages/send-template - Send approved template message
 router.post('/send-template', async (req, res) => {
-  const { contact_id, template_name, language_code = 'en_US', parameter_mapping = {} } = req.body;
+  const { contact_id, template_name, language_code, parameter_mapping = {} } = req.body;
   const orgId = req.user.organizationId;
 
   try {
@@ -72,16 +72,13 @@ router.post('/send-template', async (req, res) => {
     const contact = contactRes.rows[0];
     if (!contact) return res.status(404).json({ success: false, error: { message: 'Contact not found' } });
 
-    // Fetch cached template components
-    const tRes = await pool.query(
-      `SELECT components FROM templates WHERE organization_id = $1 AND name = $2 LIMIT 1`,
-      [orgId, template_name]
-    );
-
-    const components = tRes.rows[0]?.components || [];
+    // Fetch cached template components & registered language code (auto-syncing if missing)
+    const templateRow = await TemplateService.getOrFetchTemplate(orgId, template_name, language_code);
+    const components = templateRow?.components || [];
+    const effectiveLanguage = templateRow?.language || language_code || 'en_US';
     const metaComponents = TemplateService.buildPayloadComponents(components, parameter_mapping, contact);
 
-    const waRes = await WhatsAppService.sendTemplate(orgId, contact.wa_number, template_name, language_code, metaComponents);
+    const waRes = await WhatsAppService.sendTemplate(orgId, contact.wa_number, template_name, effectiveLanguage, metaComponents);
     const waMessageId = waRes.messages?.[0]?.id;
 
     // Get or create conversation

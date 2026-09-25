@@ -21,6 +21,8 @@ router.get('/', async (req, res) => {
 
 // POST /webhook -> Meta event callbacks
 router.post('/', (req, res) => {
+  console.log("Webhook received:", JSON.stringify(req.body, null, 2));
+
   // CRITICAL REQUIREMENT: Acknowledge HTTP 200 OK immediately so Meta doesn't retry or drop webhooks
   res.sendStatus(200);
 
