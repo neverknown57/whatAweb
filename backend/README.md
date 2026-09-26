@@ -11,10 +11,10 @@ Node.js & Express REST API server providing Meta WhatsApp Cloud API communicatio
 WHATSAPP_PHONE_NUMBER_ID=123456785890
 WHATSAPP_BUSINESS_ACCOUNT_ID=18008888888
 WHATSAPP_ACCESS_TOKEN=your_permanent_meta_access_token
-WHATSAPP_API_VERSION=v26.0
+WHATSAPP_API_VERSION=v27.0
 
 # Webhook Verification Token Secret
-WHATSAPP_WEBHOOK_VERIFY_TOKEN=choose_a_random_secret_string
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=choosesecretstring
 
 # PostgreSQL Database Connection
 DATABASE_URL=postgres://postgres:password@localhost:5433/db_name
