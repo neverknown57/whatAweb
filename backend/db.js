@@ -9,6 +9,9 @@ function sleep(ms) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false   // Aiven requires SSL, but you can skip cert validation
+  },
 });
 
 pool.on('error', (err) => {

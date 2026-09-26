@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  // baseURL: '/api',
+  baseURL: "https://whataweb.netlify.app/api/"
 });
 
 api.interceptors.request.use((config) => {
